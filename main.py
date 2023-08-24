@@ -17,15 +17,16 @@ API_KEY = os.getenv("API_KEY")
 monitors = get_monitors()
 for monitor in monitors:
     screen_width = int(monitor.width*0.5)
-    screen_height = int(monitor.height*0.5)
+    screen_height = int(monitor.height *0.5)
     break
 
 sidebarClosedWidth = 0.06*screen_width
 sidebarOpenWidth = 0.2*screen_width
+sidebarOpen = False
 mapShown = True
 def showMap():
         searchedCity = searchBar.get()
-        url =  f"{WEATHER_URL}key={API_KEY}&q={searchedCity}&lang=ko"
+        url =  f"{WEATHER_URL}key={API_KEY}&q={searchedCity}&lang=en"
         response = requests.get(url).json()
         print(response)
 
@@ -43,18 +44,44 @@ def showMap():
             sideBar.lift()
             mapShown = True
 
+
             sideBarCanvas.pack()
             sideBarCanvasButton = sideBarCanvas.create_window(sidebarClosedWidth * 0.5, screen_height * 0.1,window=weatherButton)
 
 
 def showWeatherInfo():
+    metric = True
+    global sidebarOpen
     searchedCity = searchBar.get()
-    url = f"{WEATHER_URL}key={API_KEY}&q={searchedCity}&lang=ko"
+    url = f"{WEATHER_URL}key={API_KEY}&q={searchedCity}&lang=en"
     response = requests.get(url).json()
+    if metric:
+        currentTemp = str(response['current']['temp_c']) + " °C"
+    else:
+        currentTemp = str(response['current']['temp_f']) + " °F"
+
+    condition = response['current']['condition']['text']
+    print(condition)
     print(f"Showing weather of {searchedCity}")
-    sideBarCanvas.config(width=sidebarOpenWidth)
-    sideBarCanvas.create_line(sidebarClosedWidth+5,screen_height *0.1- 32,sidebarClosedWidth+5,screen_height*0.9+32,fill="grey",width=1)
-    sideBarCanvas.create_text()
+    if sidebarOpen == False:
+        sideBarCanvas.create_line(sidebarClosedWidth+5,screen_height *0.1- 32,sidebarClosedWidth+5,screen_height*0.9+32,fill="grey",width=1)
+        sideBarCanvas.create_text(sidebarOpenWidth  *0.5, screen_height *0.1, text=f"{currentTemp}\n{condition}")
+
+        sideBarCanvas.config(width=sidebarOpenWidth)
+        sidebarOpen = True
+    else:
+        sideBarCanvas.config(width=sidebarClosedWidth)
+        sidebarOpen = False
+
+def calculateTemp(response,temp_kelvin, metric):
+    if metric:
+        temp_celsius = temp_kelvin - 273.15
+        return temp_celsius
+    else:
+        temp_fahrenheit = (temp_kelvin - 273.15) *(9/5) +32
+        return temp_fahrenheit
+
+
 
 root = tk.Tk()
 root.geometry(f"{screen_width}x{screen_height}")
